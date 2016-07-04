@@ -79,15 +79,21 @@ public class EVURLCache: NSURLCache {
             EVURLCache.debugLog("CACHE not allowed for \(url)")
             return nil
         }
-
+        
+        var storagePath = ""
         // Is the file in the cache? If not, is the file in the PreCache?
-        var storagePath: String = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._cacheDirectory)
+        if let storagePath_ = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._cacheDirectory) {
+            storagePath = storagePath_
+        }
+        
         if !NSFileManager.defaultManager().fileExistsAtPath(storagePath) {
             EVURLCache.debugLog("PRECACHE not found \(storagePath)")
-            storagePath  = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._preCacheDirectory)
-            if !NSFileManager.defaultManager().fileExistsAtPath(storagePath) {
-                EVURLCache.debugLog("CACHE not found \(storagePath)")
-                return nil
+            if let storagePath_ = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._preCacheDirectory) {
+                storagePath = storagePath_
+                if !NSFileManager.defaultManager().fileExistsAtPath(storagePath) {
+                    EVURLCache.debugLog("CACHE not found \(storagePath)")
+                    return nil
+                }
             }
         }
 
@@ -131,9 +137,8 @@ public class EVURLCache: NSURLCache {
         }
 
         // check if caching is allowed
-        if request.cachePolicy == NSURLRequestCachePolicy.ReloadIgnoringCacheData {
+        if let storagePath: String = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._preCacheDirectory) where request.cachePolicy == NSURLRequestCachePolicy.ReloadIgnoringCacheData {
             // If the file is in the PreCache folder, then we do want to save a copy in case we are without internet connection
-            let storagePath: String = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._preCacheDirectory)
             if !NSFileManager.defaultManager().fileExistsAtPath(storagePath) {
                 EVURLCache.debugLog("CACHE not storing file, it's not allowed by the cachePolicy : \(request.URL)")
                 return
@@ -142,7 +147,8 @@ public class EVURLCache: NSURLCache {
         }
 
         // create storrage folder
-        let storagePath: String = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._cacheDirectory)
+        guard let storagePath: String = EVURLCache.storagePathForRequest(request, rootPath: EVURLCache._cacheDirectory) else { return }
+        
         if var storageDirectory: String = NSURL(fileURLWithPath: "\(storagePath)").URLByDeletingLastPathComponent?.absoluteString.stringByRemovingPercentEncoding {
             do {
                 if storageDirectory.hasPrefix("file:") {
@@ -207,7 +213,7 @@ public class EVURLCache: NSURLCache {
     }
 
     // build up the complete storrage path for a request plus root folder.
-    public static func storagePathForRequest(request: NSURLRequest, rootPath: String) -> String {
+    public static func storagePathForRequest(request: NSURLRequest, rootPath: String) -> String? {
         var localUrl: String!
         let host: String = request.URL?.host ?? "default"
 
@@ -221,6 +227,8 @@ public class EVURLCache: NSURLCache {
                 NSLog("WARNING: Unable to get the path from the request: \(request)")
             }
         }
+        
+        guard let _ = localUrl else { return nil }
 
         // Without an extension it's treated as a folder and the file will be called index.html
         if let storageFile: String = localUrl.componentsSeparatedByString("/").last {
