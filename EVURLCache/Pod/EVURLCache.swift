@@ -22,8 +22,8 @@ public class EVURLCache: NSURLCache {
     public static var MAX_AGE = "604800000" // The default maximum age of a cached file in miliseconds. (1 week)
     public static var PRE_CACHE_FOLDER = "PreCache"  // The folder in your app with the prefilled cache content
     public static var CACHE_FOLDER = "Cache" // The folder in the Documents folder where cached files will be saved
-    public static var MAX_FILE_SIZE = 24 // The maximum file size that will be cached (2^24 = 16MB)
-    public static var MAX_CACHE_SIZE = 30 // The maximum file size that will be cached (2^30 = 256MB)
+    public static var MAX_FILE_SIZE = 16 * 1024 * 1024 // The maximum file size that will be cached (16 * 1024 * 1024Bytes = 16MB)
+    public static var MAX_CACHE_SIZE = 256 * 1024 * 1024 // The maximum file size that will be cached (256 * 1024 * 1024Bytes = 256MB)
     public static var LOGGING = false // Set this to true to see all caching action in the output log
     public static var FORCE_LOWERCASE = true // Set this to false if you want to use case insensitive filename compare
     public static var _cacheDirectory: String!
@@ -37,7 +37,7 @@ public class EVURLCache: NSURLCache {
         _cacheDirectory = NSURL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)[0]).URLByAppendingPathComponent(CACHE_FOLDER).absoluteString
         _preCacheDirectory = NSURL(fileURLWithPath: NSBundle.mainBundle().resourcePath!).URLByAppendingPathComponent(PRE_CACHE_FOLDER).absoluteString
 
-        let urlCache = EVURLCache(memoryCapacity: 1<<MAX_FILE_SIZE, diskCapacity: 1<<MAX_CACHE_SIZE, diskPath: _cacheDirectory)
+        let urlCache = EVURLCache(memoryCapacity: MAX_FILE_SIZE, diskCapacity: MAX_CACHE_SIZE, diskPath: _cacheDirectory)
 
         NSURLCache.setSharedURLCache(urlCache)
     }
