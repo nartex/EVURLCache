@@ -216,7 +216,13 @@ public class EVURLCache: NSURLCache {
     public static func storagePathForRequest(request: NSURLRequest, rootPath: String) -> String? {
         var localUrl: String!
         let host: String = request.URL?.host ?? "default"
-
+        
+        if let urlString = request.URL?.absoluteString as? NSString where urlString.length > 4 {
+            if urlString.substringToIndex(4) == "data:" {
+                return nil
+            }
+        }
+        
         // The filename could be forced by the remote server. This could be used to force multiple url's to the same cache file
         if let cacheKey = request.valueForHTTPHeaderField(URLCACHE_CACHE_KEY) {
             localUrl = "\(host)/\(cacheKey)"
