@@ -230,7 +230,7 @@ public class EVURLCache: NSURLCache {
             if let path = request.URL?.path {
                 localUrl = "\(host)\(path)"
             } else {
-                NSLog("WARNING: Unable to get the path from the request: \(request)")
+                return nil
             }
         }
         
